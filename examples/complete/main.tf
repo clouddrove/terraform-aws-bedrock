@@ -59,19 +59,19 @@ module "subnets" {
 ## PostgreSQL Serverless
 ##-----------------------------------------------------------------------------
 module "aurora_postgresql" {
-  source          = "clouddrove/aurora/aws"
-  version         = "2.0.0"
-  name            = "${local.name}-postgres"
-  environment     = local.environment
-  engine          = "aurora-postgresql"
-  engine_mode     = "provisioned"
-  engine_version  = "16.1"
-  master_username = "root"
-  database_name   = "postgres"
+  source               = "clouddrove/aurora/aws"
+  version              = "2.0.0"
+  name                 = "${local.name}-postgres"
+  environment          = local.environment
+  engine               = "aurora-postgresql"
+  engine_mode          = "provisioned"
+  engine_version       = "16.1"
+  master_username      = "root"
+  database_name        = "postgres"
   vpc_id               = module.vpc.vpc_id
   subnets              = module.subnets.public_subnet_id
-  sg_ids        = []
-  allowed_ports = [5432]
+  sg_ids               = []
+  allowed_ports        = [5432]
   allowed_ip           = [module.vpc.vpc_cidr_block]
   enable_http_endpoint = true
 
@@ -116,14 +116,14 @@ resource "null_resource" "apply_sql_commands" {
 ##-----------------------------------------------------------------------------
 module "bedrock" {
 
-  enable               = true
-  source               = "../.."
-  embedding_model_arn  = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1"
-  s3_arn               = module.s3_bucket.arn
-  cluster_arn          = module.aurora_postgresql.cluster_arn
-  secret_manager_arn   = module.aurora_postgresql.cluster_master_user_secret[0].secret_arn
-  knowledgebase_name   = "test-knowledgebase"
-  datasource_name      = "test-datasource"
+  enable              = true
+  source              = "../.."
+  embedding_model_arn = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1"
+  s3_arn              = module.s3_bucket.arn
+  cluster_arn         = module.aurora_postgresql.cluster_arn
+  secret_manager_arn  = module.aurora_postgresql.cluster_master_user_secret[0].secret_arn
+  knowledgebase_name  = "test-knowledgebase"
+  datasource_name     = "test-datasource"
 
   bedrock_role_name                 = "bedrock-test-role"
   bedrock_model_policy_name         = "bedrock-invokemodel-policy"
@@ -131,35 +131,25 @@ module "bedrock" {
   bedrock_s3_policy_name            = "bedrock-s3-policy"
   bedrock_secretmanager_policy_name = "bedrock-secretmanager-policy"
 
-  guardrails_creation         = true
-  guardrails_name             = "test-guardrails"
-  guardrails_block_input_msg  = "This model didnt accept this types of sentence"
-  guardrails_block_output_msg = "This model is not suppose to give this types of answer"
-  word_content                = "HATE"
-  words_config                = ["HATE"]
-
-  topics = [
+  guardrails = [
     {
-      name       = "investment_topic"
-      examples   = ["Where should I invest my money ?"]
-      type       = "DENY"
-      definition = "Investment advice refers to inquiries, guidance, or recommendations regarding the management or allocation of funds or assets with the goal of generating returns."
+      name        = "Guardrail1", blocked_input_messaging = "Your request can't be processed at the moment", blocked_outputs_messaging = "Your request can't be processed at the moment",
+      description = "Guardrail for Personal intent", words_config = ["HATE"],
+      topics = [{
+        name       = "investment_topic"
+        examples   = ["Where should I invest my money ?"]
+        type       = "DENY"
+        definition = "Investment advice refers to inquiries, guidance, or recommendations regarding the management or allocation of funds or assets with the goal of generating returns."
+      }],
+
+      guardrail_filters = [
+        { type = "SEXUAL", input_strength = "HIGH", output_strength = "HIGH" },
+        { type = "VIOLENCE", input_strength = "HIGH", output_strength = "HIGH" },
+        { type = "HATE", input_strength = "HIGH", output_strength = "HIGH" },
+        { type = "INSULTS", input_strength = "HIGH", output_strength = "HIGH" },
+        { type = "MISCONDUCT", input_strength = "HIGH", output_strength = "HIGH" },
+        { type = "PROMPT_ATTACK", input_strength = "HIGH", output_strength = "NONE" }
+      ]
     }
   ]
-  pii_entities = [
-    {
-      action = "BLOCK"
-      type   = "NAME"
-    }
-  ]
-  regexes = [
-    {
-      action      = "BLOCK"
-      description = "example regex"
-      name        = "regex_example"
-      pattern     = "^\\d{3}-\\d{2}-\\d{4}$"
-    }
-  ]
-
-
 }

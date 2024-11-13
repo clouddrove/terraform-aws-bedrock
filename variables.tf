@@ -220,3 +220,31 @@ variable "topics" {
   #   }
   # ]
 }
+
+///Changed
+
+variable "guardrails" {
+  type = list(object({
+    name                      = string
+    blocked_input_messaging   = string
+    blocked_outputs_messaging = string
+    description               = string
+    words_config              = optional(list(string), [])
+
+    topics = optional(list(object({
+      name       = string
+      examples   = list(string)
+      type       = optional(string)
+      definition = string
+    })), [])
+
+    guardrail_filters = list(object({
+      type            = string
+      input_strength  = string
+      output_strength = string
+    }))
+
+  }))
+
+  default = null
+}

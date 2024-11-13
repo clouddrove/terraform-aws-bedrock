@@ -238,21 +238,33 @@ resource "aws_bedrockagent_data_source" "bedrock" {
   }
 }
 
+locals {
+  guardrails_map = {
+    for idx, guardrail in var.guardrails :
+    "guardrail_${idx}" => guardrail
+  }
+}
+
 resource "aws_bedrock_guardrail" "guardrail" {
-  count                     = var.guardrails_creation ? 1 : 0
-  name                      = var.guardrails_name
-  blocked_input_messaging   = var.guardrails_block_input_msg
-  blocked_outputs_messaging = var.guardrails_block_output_msg
-  description               = var.guardrails_description
-  depends_on                = [aws_bedrockagent_data_source.bedrock]
+  for_each                  = local.guardrails_map
+  name                      = each.value.name
+  blocked_input_messaging   = each.value.blocked_input_messaging
+  blocked_outputs_messaging = each.value.blocked_outputs_messaging
+
+  description = each.value.description
 
   content_policy_config {
-    filters_config {
-      input_strength  = var.input_strength
-      output_strength = var.output_strength
-      type            = var.word_content
+    dynamic "filters_config" {
+      for_each = each.value.guardrail_filters
+      content {
+        input_strength  = filters_config.value.input_strength
+        output_strength = filters_config.value.output_strength
+        type            = filters_config.value.type
+      }
+
     }
   }
+
 
   word_policy_config {
     # count= var.enable_words_config ?1:0
@@ -260,36 +272,16 @@ resource "aws_bedrock_guardrail" "guardrail" {
       type = "PROFANITY"
     }
     dynamic "words_config" {
-      for_each = var.words_config
+      for_each = each.value.words_config
       content {
         text = words_config.value
       }
     }
   }
-  sensitive_information_policy_config {
-    dynamic "pii_entities_config" {
-      for_each = var.pii_entities
-      content {
-        action = pii_entities_config.value.action
-        type   = pii_entities_config.value.type
-      }
-    }
-
-    dynamic "regexes_config" {
-      for_each = var.regexes
-      content {
-        action      = regexes_config.value.action
-        description = regexes_config.value.description
-        name        = regexes_config.value.name
-        pattern     = regexes_config.value.pattern
-      }
-    }
-
-  }
 
   topic_policy_config {
     dynamic "topics_config" {
-      for_each = var.topics
+      for_each = length(each.value.topics) > 0 ? each.value.topics : []
       content {
         name       = topics_config.value.name
         examples   = topics_config.value.examples
@@ -298,6 +290,9 @@ resource "aws_bedrock_guardrail" "guardrail" {
       }
     }
   }
-
 }
-
+resource "awscc_bedrock_guardrail_version" "llm_response_version" {
+  for_each             = local.guardrails_map
+  guardrail_identifier = aws_bedrock_guardrail.guardrail[each.key].guardrail_id
+  description          = "version1"
+}
