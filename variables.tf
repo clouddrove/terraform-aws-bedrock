@@ -140,7 +140,7 @@ variable "managed_word_lists_config" {
 
 variable "enable" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "bedrock_assume_role_policy" {
