@@ -17,7 +17,7 @@ locals {
 ##-----------------------------------------------------------------------------
 module "s3_bucket" {
   source      = "clouddrove/s3/aws"
-  version     = "2.0.0"
+  version     = "2.0.1"
   name        = "clouddrove-secure-bucket"
   environment = local.environment
   label_order = local.label_order
