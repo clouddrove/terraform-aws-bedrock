@@ -17,7 +17,7 @@ locals {
 ##-----------------------------------------------------------------------------
 module "s3_bucket" {
   source      = "clouddrove/s3/aws"
-  version     = "2.0.0"
+  version     = "2.0.1"
   name        = "clouddrove-secure-bucket"
   environment = local.environment
   label_order = local.label_order
@@ -31,7 +31,7 @@ module "s3_bucket" {
 ##-----------------------------------------------------------------------------
 module "vpc" {
   source      = "clouddrove/vpc/aws"
-  version     = "2.0.0"
+  version     = "2.0.5"
   name        = local.name
   environment = local.environment
   cidr_block  = "172.16.0.0/16"
@@ -44,7 +44,7 @@ module "vpc" {
 #tfsec:ignore:aws-ec2-no-public-ingress-acl  # Public ingress is allowed from all network but can be restricted by using variables.
 module "subnets" {
   source             = "clouddrove/subnet/aws"
-  version            = "2.0.1"
+  version            = "2.0.3"
   name               = local.name
   environment        = local.environment
   availability_zones = ["us-east-1a", "us-east-1b"]

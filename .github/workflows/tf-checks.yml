@@ -1,27 +1,32 @@
 name: tf-checks
+
 permissions:
   id-token: write
   contents: read
+
 on:
   pull_request:
     paths:
       - '**/*.tf'
       - '*.tf'
 jobs:
-  basic:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+  tf-checks-example-basic:
+    if: github.actor != 'dependabot[bot]'
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@v2
     with:
-      working_directory: './examples/basic/'
+      working_directory: './examples/basic'
       provider: aws
       enable_plan: true
       show_plan: false
     secrets:
       BUILD_ROLE: ${{ secrets.BUILD_ROLE }}
 
-  complete:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@master
+
+  tf-checks-example-complete:
+    if: github.actor != 'dependabot[bot]'
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@v2
     with:
-      working_directory: './examples/complete/'
+      working_directory: './examples/complete'
       provider: aws
       enable_plan: true
       show_plan: false
